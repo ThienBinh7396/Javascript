@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Custom Select</title>
+
+    <style>
+      .custom-select__wrapper {
+        position: relative;
+        user-select: none;
+      }
+
+      .custom-select__wrapper .custom-select__value {
+        position: relative;
+        padding: 8px 24px 8px 12px;
+        border: 1px solid;
+      }
+      .custom-select__wrapper .custom-select__value::before {
+        content: "";
+        width: 16px;
+        height: 16px;
+        position: absolute;
+        top: 50%;
+        right: 8px;
+        transition: 0.2s ease-in-out;
+        transform: translate(0, -50%);
+        background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAACfElEQVR4Xu3Yz6tIQRQH8M+LsMAGEVnJUlkiRUJJSn4k2SlRFqJEbBUWSnoLip1CSkkhyQJF+QdkwY6i2JHyq9F9m+fl3Tt35r5bd2Z9zvl+z3e+587MHTHwNTLw/hUBigMGrkAZgYEboHwEywiUERi4AmUEBm6AcgqUESgjMHAFyggM3ADlFIgZge24jIU9c88HHMS9JrxiBPiE+U1AOoz92HRjYgQISi/qsKkmUO+xpElCjABbcRfTmgB1EPsD2/CwCVaMAKH+YYw2Aeog9gCuNsWJFSDgXMCxpoCZ4s/iVEztNgKE3NvYGQOcMOcG9uF3TM02AgS8WXiC1THgCXKeYjO+x9ZqK0DAXYAXWBZLIjLvNdbgS2T+37QUAoQ6yysR5rUh0yA3nPer8K5BzoShqQQIxdfiMWa2JTVJ/lesx6sUOCkFCHz2IHyUUtcd6/UXdlT3kBT9ZyF6AueSsPu3yBFcSlk7106Fx1J4mKRcF3E0ZcGUH8HxvMI1ObzKtiQifAe7EUYg6crlgEByNp5hZUvGL7EB31rWyX4KTASwGKGBpZHk31bHXXiCZ1k5HTBGeAWeY27DDj5XN8w3DfMahXchQCC0CfcxvSa7cLXdWAlXMyUurCsBArv9uFaDZnjU7MWtGrGtQ7oUIJA9g9OTsD6J8607q1mgawECrevV83UiildwqCb3JGFTIcAMPMK6cR08qH5p/UzSWc0iUyFAoDan+qO0q7rc3MTxXGf9/7SYKgFq7k/+sCJAfo37jVAc0O/9yc+uOCC/xv1GKA7o9/7kZ1cckF/jfiMUB/R7f/KzKw7Ir3G/EYoD+r0/+dkVB+TXuN8Ig3fAH8alQUH85V+3AAAAAElFTkSuQmCC)
+          center no-repeat;
+        background-size: cover;
+      }
+
+      .custom-select__wrapper.focus .custom-select__value::before {
+        transform: translate(0, -50%) rotate(180deg);
+      }
+
+      .custom-select__wrapper .custom-select__selections {
+        position: absolute;
+        top: calc(100% + 20px);
+        border: 1px solid;
+        background-color: #fff;
+        opacity: 0.8;
+        visibility: hidden;
+        transition: 0.2s;
+        z-index: 2;
+      }
+      .custom-select__wrapper.focus .custom-select__selections {
+        opacity: 1;
+        top: calc(100% - 1px);
+        visibility: visible;
+      }
+
+      .custom-select__wrapper .custom-select__option {
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      .custom-select__wrapper .custom-select__option.selected {
+        color: #1867c0;
+        background-color: rgba(24, 103, 192, 0.12);
+      }
+
+      .custom-select__wrapper .custom-select-optgroup__label {
+        padding: 8px 0 0 12px;
+        font-weight: bold;
+      }
+
+      .custom-select__wrapper .custom-select__optgroup .custom-select__option {
+        padding-left: 24px;
+      }
+
+      .custom-select__wrapper .custom-select__option:hover {
+        background-color: #eee;
+      }
+    </style>
+  </head>
+  <body>
+    <select class="custom-select" name="category" id="category" multiple>
+      <optgroup label="Phone">
+        <option value="IPhone1">IPhone1</option>
+        <option value="IPhone2">IPhone2</option>
+      </optgroup>
+      <option value="Laptop Dell">Laptop Dell</option>
+    </select>
+    <br />
+    <br />
+    <hr />
+    <br />
+    <br />
+    <select
+      class="custom-select"
+      label-icon
+      name="car"
+      id="car"
+      placeholder="Car"
+    >
+      <option value="volvo">Volvo</option>
+      <option value="saab">Saab</option>
+      <option value="mercedes">Mercedes</option>
+      <option value="audi">Audi</option>
+    </select>
+
+    <script type="text/javascript">
+      function CustomSelect(selector) {
+        function InitSelection(target) {
+          this._firstRender = false;
+
+          // this._originSelectNode = target;
+
+          this._parentNode = document.createElement("div");
+          this._parentNode.classList.add("custom-select__wrapper");
+
+          this._inputValueNode = document.createElement("div");
+          this._inputValueNode.classList.add("custom-select__value");
+
+          this._initSelectConfig = (select) => {
+            let _initConfig = {
+              multiple: select.getAttribute("multiple") !== null,
+              labelIcon: select.getAttribute("label-icon") !== null,
+              placeholder: select.getAttribute("placeholder"),
+            };
+
+            return _initConfig;
+          };
+          this.config = this._initSelectConfig(target);
+
+          this.value = this.config.multiple ? [] : "";
+          this.label = this.config.multiple ? [] : "";
+
+          console.log(this);
+
+          this._findOptionNode = () => {
+            this.options = [];
+
+            let _childNodes = target.children;
+
+            for (let index = 0; index < _childNodes.length; index++) {
+              let childNode = _childNodes[index];
+
+              if (childNode.tagName.match(/^option$/gi)) {
+                this.options.push({
+                  value: childNode.getAttribute("value"),
+                  label: childNode.innerText,
+                });
+              } else {
+                let _groups = {
+                  type: "group",
+                  label: childNode.getAttribute("label"),
+                  options: [],
+                };
+
+                let _optionNodes = childNode.querySelectorAll("option");
+
+                _optionNodes.forEach((optionNode) => {
+                  _groups.options.push({
+                    value: optionNode.getAttribute("value"),
+                    label: optionNode.innerText,
+                  });
+                });
+
+                this.options.push(_groups);
+              }
+            }
+          };
+
+          this._listenOnFocusSelect = (event) => {
+            event.stopPropagation();
+
+            let isFocus = this._parentNode.classList.contains("focus");
+
+            document.body.click();
+
+            if (!isFocus) {
+              this._parentNode.classList.toggle("focus");
+            }
+          };
+
+          this._stopListenOnFocusSelect = (event) => {
+            event.stopPropagation();
+            this._parentNode.classList.remove("focus");
+          };
+
+          this._initializeSelectNode = () => {
+            if (!this._firstRender) {
+              target.parentNode.insertBefore(this._parentNode, target);
+              this._parentNode.appendChild(target);
+
+              this._inputValueNode.innerHTML = this.config.placeholder
+                ? this.config.placeholder
+                : "&nbsp;";
+
+              this._inputValueNode.addEventListener(
+                "click",
+                this._listenOnFocusSelect
+              );
+
+              document.addEventListener("click", this._stopListenOnFocusSelect);
+
+              this._parentNode.appendChild(this._inputValueNode);
+
+              this._firstRender = true;
+            }
+          };
+
+          this._renderHtmlStringFromObject = (obj) => {
+            if (obj.hasOwnProperty("type") && obj.type === "group") {
+              let _optionChildHtmlString = obj.options.reduce(
+                (__htmlString, __option) =>
+                  `${__htmlString}${this._renderHtmlStringFromObject(
+                    __option
+                  )}`,
+                ""
+              );
+
+              let _htmlString = `
+                    <div class='custom-select__optgroup'>
+                      <div class='custom-select-optgroup__label'>${obj.label}</div>
+                      ${_optionChildHtmlString}
+                    </div>
+              `;
+
+              return _htmlString;
+            } else {
+              return `
+                <div class='custom-select__option' data-value=${obj.value}>${obj.label}</div>
+              `;
+            }
+          };
+
+          this._updateMultipleValue = (arr, value) => {
+            for (let index = 0; index < arr.length; index++) {
+              if (arr[index] === value) {
+                return arr.filter((it) => it !== value);
+              }
+            }
+            return [...arr, value];
+          };
+
+          this._changeSelectValue = (value, label) => {
+            this.value = this.config.multiple
+              ? this._updateMultipleValue(this.value, value)
+              : value;
+            target.value = this.value;
+
+            this.label = this.config.multiple
+              ? this._updateMultipleValue(this.label, label)
+              : label;
+            this._inputValueNode.innerHTML =
+              this.config.multiple && this.label.length === 0
+                ? "&nbsp;"
+                : this.label;
+          };
+
+          this._resetAndUpdateSelectedOption = (_optionIsSelected) => {
+            if (!this.config.multiple) {
+              this._parentNode
+                .querySelectorAll(".custom-select__option")
+                .forEach((_optionNode) => {
+                  _optionNode.classList.remove("selected");
+                });
+
+              _optionIsSelected.classList.add("selected");
+            } else {
+              _optionIsSelected.classList.toggle("selected");
+            
+            }
+          };
+
+          this._listenOnOptionClicked = (event) => {
+            event.stopPropagation();
+
+            let value = event.target.getAttribute("data-value"),
+              text = event.target.innerText;
+
+            this._resetAndUpdateSelectedOption(event.target);
+
+            if (value && text) {
+              this._changeSelectValue(value, text);
+            }
+          };
+
+          this._renderSelection = () => {
+            let _selectionNode = this._parentNode.querySelector(
+              ".custom-select__selections"
+            );
+
+            let _htmlString = this.options.reduce(
+              (_string, _option) =>
+                _string + this._renderHtmlStringFromObject(_option),
+              ""
+            );
+
+            if (!_selectionNode) {
+              _selectionNode = document.createElement("div");
+              _selectionNode.className = "custom-select__selections";
+              _selectionNode.innerHTML = _htmlString;
+              this._parentNode.appendChild(_selectionNode);
+            } else {
+              _selectionNode.innerHTML = _htmlString;
+            }
+
+            this._parentNode
+              .querySelectorAll(".custom-select__option")
+              .forEach((_selector) => {
+                _selector.addEventListener(
+                  "click",
+                  this._listenOnOptionClicked
+                );
+              });
+          };
+
+          this._init = () => {
+            if (target.style.setProperty) {
+              target.style.setProperty("display", "none", "important");
+            } else {
+              target.style.setAttribute("display", "none");
+            }
+            this._findOptionNode();
+            this._initializeSelectNode();
+
+            this._renderSelection();
+
+            console.log(this.config, this.options);
+          };
+
+          this._init();
+        }
+
+        (function (selector) {
+          selector.forEach((element) => {
+            new InitSelection(element);
+          });
+        }.call(CustomSelect, selector));
+      }
+
+      CustomSelect(document.querySelectorAll(".custom-select"));
+    </script>
+  </body>
+</html>
