@@ -51,8 +51,13 @@
       }
 
       .custom-select__wrapper .custom-select__option {
+        display: flex;
         padding: 8px 12px;
         cursor: pointer;
+      }
+
+      .custom-select__wrapper .custom-select__option:hover {
+        background-color: #eee;
       }
 
       .custom-select__wrapper .custom-select__option.selected {
@@ -69,13 +74,24 @@
         padding-left: 24px;
       }
 
-      .custom-select__wrapper .custom-select__option:hover {
-        background-color: #eee;
+      .custom-select__wrapper .custom-select__label-image {
+        width: 16px;
+        height: 16px;
+        margin-right: 4px;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
       }
     </style>
   </head>
   <body>
-    <select class="custom-select" name="category" id="category" multiple>
+    <select
+      class="custom-select"
+      name="category"
+      id="category"
+      multiple
+      placeholder="Device..."
+    >
       <optgroup label="Phone">
         <option value="IPhone1">IPhone1</option>
         <option value="IPhone2">IPhone2</option>
@@ -89,19 +105,27 @@
     <br />
     <select
       class="custom-select"
-      label-icon
+      label-with-image
       name="car"
       id="car"
       placeholder="Car"
     >
-      <option value="volvo">Volvo</option>
+      <option
+        data-image="https://i.pinimg.com/originals/4e/37/68/4e3768350e3225a15ea3c720a5c4259c.jpg"
+        value="volvo"
+        >Volvo</option
+      >
       <option value="saab">Saab</option>
-      <option value="mercedes">Mercedes</option>
+      <option
+        data-image="https://thuthuatnhanh.com/wp-content/uploads/2019/05/gai-xinh-toc-ngan-facebook.jpg"
+        value="mercedes"
+        >Mercedes</option
+      >
       <option value="audi">Audi</option>
     </select>
 
     <script type="text/javascript">
-      function CustomSelect(selector) {
+      function CustomSelect(selector, config) {
         function InitSelection(target) {
           this._firstRender = false;
 
@@ -116,18 +140,15 @@
           this._initSelectConfig = (select) => {
             let _initConfig = {
               multiple: select.getAttribute("multiple") !== null,
-              labelIcon: select.getAttribute("label-icon") !== null,
+              labelWidthImage: select.getAttribute("label-with-image") !== null,
               placeholder: select.getAttribute("placeholder"),
             };
 
             return _initConfig;
           };
-          this.config = this._initSelectConfig(target);
+          this.config = { ...this._initSelectConfig(target), ...config };
 
-          this.value = this.config.multiple ? [] : "";
-          this.label = this.config.multiple ? [] : "";
-
-          console.log(this);
+          this.selected = this.config.multiple ? [] : null;
 
           this._findOptionNode = () => {
             this.options = [];
@@ -141,6 +162,7 @@
                 this.options.push({
                   value: childNode.getAttribute("value"),
                   label: childNode.innerText,
+                  image: childNode.getAttribute("data-image"),
                 });
               } else {
                 let _groups = {
@@ -155,6 +177,7 @@
                   _groups.options.push({
                     value: optionNode.getAttribute("value"),
                     label: optionNode.innerText,
+                    image: optionNode.getAttribute("data-image"),
                   });
                 });
 
@@ -222,7 +245,16 @@
               return _htmlString;
             } else {
               return `
-                <div class='custom-select__option' data-value=${obj.value}>${obj.label}</div>
+                <div class='custom-select__option' data-value='${obj.value}'>
+                  ${
+                    this.config.labelWidthImage
+                      ? `<span class='custom-select__label-image' style='background-image: url(${
+                          obj.image || ""
+                        })' ></span>`
+                      : ""
+                  } 
+                  ${obj.label}
+                </div>
               `;
             }
           };
@@ -237,18 +269,52 @@
           };
 
           this._changeSelectValue = (value, label) => {
-            this.value = this.config.multiple
-              ? this._updateMultipleValue(this.value, value)
-              : value;
-            target.value = this.value;
+            let _findOptionByValueAndLabel;
 
-            this.label = this.config.multiple
-              ? this._updateMultipleValue(this.label, label)
-              : label;
-            this._inputValueNode.innerHTML =
-              this.config.multiple && this.label.length === 0
-                ? "&nbsp;"
-                : this.label;
+            for (let index = 0; index < this.options.length; index++) {
+              const currentInArr = this.options[index];
+              if (
+                currentInArr.hasOwnProperty("type") &&
+                currentInArr.type === "group"
+              ) {
+                _findOptionByValueAndLabel = currentInArr.options.find(
+                  (it) => it.value === value
+                );
+                if (_findOptionByValueAndLabel) break;
+              } else {
+                if (currentInArr.value === value) {
+                  _findOptionByValueAndLabel = currentInArr;
+                  break;
+                }
+              }
+            }
+
+            this.selected = this.config.multiple
+              ? this._updateMultipleValue(
+                  this.selected,
+                  _findOptionByValueAndLabel
+                )
+              : _findOptionByValueAndLabel;
+
+            target.value = this.config.multiple
+              ? this.selected.map((it) => it.value)
+              : this.selected.value;
+
+            if (this.config.multiple && this.selected.length === 0) {
+              this._inputValueNode.innerHTML =
+                this.config.placeholder || "&nbsp;";
+              return;
+            }
+
+            this._inputValueNode.innerHTML = this.config.hasOwnProperty(
+              "templateLabel"
+            )
+              ? this.config.templateLabel(
+                  this.selected.label || this.selected.map((it) => it.label)
+                )
+              : this.config.multiple
+              ? this.selected.map((it) => it.label)
+              : this.selected.label;
           };
 
           this._resetAndUpdateSelectedOption = (_optionIsSelected) => {
@@ -262,7 +328,6 @@
               _optionIsSelected.classList.add("selected");
             } else {
               _optionIsSelected.classList.toggle("selected");
-            
             }
           };
 
@@ -327,13 +392,21 @@
         }
 
         (function (selector) {
-          selector.forEach((element) => {
-            new InitSelection(element);
-          });
+          if (selector.tagName === "SELECT") {
+            new InitSelection(selector);
+          } else {
+            selector.forEach((element) => {
+              new InitSelection(element);
+            });
+          }
         }.call(CustomSelect, selector));
       }
 
-      CustomSelect(document.querySelectorAll(".custom-select"));
+      CustomSelect(document.querySelectorAll(".custom-select"), {
+        templateLabel: function (label) {
+          return Array.isArray(label) ? label.join(":") : label;
+        },
+      });
     </script>
   </body>
 </html>

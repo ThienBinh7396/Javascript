@@ -1,0 +1,23 @@
+{
+  "name": "javascript",
+  "version": "1.0.0",
+  "description": "",
+  "main": "quicksort.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ThienBinh7396/Javascript.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ThienBinh7396/Javascript/issues"
+  },
+  "homepage": "https://github.com/ThienBinh7396/Javascript#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}

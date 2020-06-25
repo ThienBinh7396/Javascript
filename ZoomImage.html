@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+
+    <style>
+      .zoom-image {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        visibility: hidden;
+        background-color: rgba(255, 255, 255, 0.98);
+        z-index: 1000;
+      }
+      .zoom-image.show {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .zoom-image img {
+        position: absolute;
+      }
+      .zoom-image img.clone-image {
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        max-width: 92%;
+        max-height: 92%;
+      }
+      img {
+        max-width: 100%;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body>
+    <img
+      src="https://media-a.laodong.vn/Storage/NewsPortal/2019/6/10/738354/595097.jpg"
+    />
+    <img
+      src="https://i.pinimg.com/originals/e7/21/92/e72192eaa0faa91c4ddfbbde1ee48a14.jpg"
+      alt=""
+      srcset=""
+    />
+    <img src="./images/oto.jpg" alt="" srcset="" />
+    <img
+      src="https://images.vov.vn/cr_w720/uploaded/mgexs9y4vchrwhdtzaag/2019_09_07/vov_220832_vbpi.jpg"
+      alt=""
+      srcset=""
+    />
+
+    <div class="container">
+      <img src="./images/anh2.jpg" alt="" />
+      <img src="./images/download.jpg" alt="" />
+    </div>
+
+    <script>
+      function ZoomImage({ selector } = {}) {
+        (function createModalWrapper() {
+          this.imageZoomWrapper = document.createElement("div");
+          this.imageZoomWrapper.className = "zoom-image";
+          this.imageZoomWrapper.innerHTML = `
+          <img id="js-zoom-image" src="" alt="" />
+          <img id="js-zoom-image-clone" style="visibility: hidden" class="clone-image" src="" alt="CLONE-IMAGE" />
+          `;
+          document.body.appendChild(this.imageZoomWrapper);
+
+          this.imageZoomNode = document.getElementById("js-zoom-image");
+          this.imageCloneZoomNode = document.getElementById(
+            "js-zoom-image-clone"
+          );
+        }.call(this));
+
+        this._updateStyleImageZoomNode = ({
+          top,
+          left,
+          width,
+          height,
+          maxWidth,
+          maxHeight,
+          transition,
+        } = {}) => {
+          let _windowWidth = document.body.offsetWidth;
+          let _windowHeight = window.innerHeight;
+          let _widthImageZoomNode = this.imageZoomNode.offsetWidth;
+          let _heightImageZoomNode = this.imageZoomNode.offsetHeight;
+          let _defaultLeft =
+            _windowWidth > _widthImageZoomNode
+              ? (_windowWidth - _widthImageZoomNode) / 2
+              : document.documentElement.offsetWidth * 0.04;
+          let _defaultTop = (_windowHeight - _heightImageZoomNode) / 2;
+
+          Object.assign(this.imageZoomNode.style, {
+            top: (top || _defaultTop) + "px",
+            left: (left || _defaultLeft) + "px",
+            width: (width || _widthImageZoomNode) + "px",
+            height: (height || _heightImageZoomNode) + "px",
+            transition: transition || "all 0.35s ease",
+          });
+        };
+
+        this._handleOnClickImage = function (targetImage) {
+          this.imageZoomWrapper.style.transitionDelay = "0s";
+
+          this.imageZoomNode.setAttribute(
+            "src",
+            targetImage.getAttribute("src")
+          );
+          this.imageCloneZoomNode.setAttribute(
+            "src",
+            targetImage.getAttribute("src")
+          );
+
+          let _targetImageboundingRect = targetImage.getBoundingClientRect();
+          let { top, left, width, height } = _targetImageboundingRect;
+
+          this._lastestTargetImage = targetImage;
+
+          this._updateStyleImageZoomNode({
+            top,
+            left,
+            width,
+            height,
+            transition: "0s",
+          });
+
+          this.imageZoomWrapper.classList.add("show");
+
+          this.imageCloneZoomNode.onload = () => {
+            if (!this.imageCloneZoomNode.getAttribute("src")) return;
+
+            let _cloneImageboundingRect = this.imageCloneZoomNode.getBoundingClientRect();
+
+            this._updateStyleImageZoomNode({
+              top: _cloneImageboundingRect.top,
+              left: _cloneImageboundingRect.left,
+              width: _cloneImageboundingRect.width,
+              height: _cloneImageboundingRect.height,
+            });
+          };
+
+          setTimeout(() => {
+            this.imageZoomWrapper.style.transition = "0.25s linear 0.4s";
+          }, 150);
+        };
+
+        this._toggleShowImageZoomWrapper = (isShow) => {
+          if (isShow) {
+            this.imageZoomWrapper.classList.add("show");
+          } else {
+            if (this._lastestTargetImage) {
+              let {
+                top,
+                left,
+                width,
+                height,
+              } = this._lastestTargetImage.getBoundingClientRect();
+
+              this._updateStyleImageZoomNode({ top, left, width, height });
+            }
+
+            this.imageZoomWrapper.classList.remove("show");
+          }
+        };
+
+        this._stopPropagation = (event) => {
+          event.stopPropagation();
+        };
+
+        this._init = () => {
+          let _self = this;
+          // binding this to function
+          this._toggleShowImageZoomWrapper = this._toggleShowImageZoomWrapper.bind(
+            this
+          );
+          this._updateStyleImageZoomNode = this._updateStyleImageZoomNode.bind(
+            this
+          );
+
+          this.imageZoomWrapper.removeEventListener(
+            "click",
+            this._toggleShowImageZoomWrapper
+          );
+          this.imageZoomWrapper.addEventListener(
+            "click",
+            this._toggleShowImageZoomWrapper.bind(this, false)
+          );
+
+          this.imageZoomNode.removeEventListener(
+            "click",
+            this._stopPropagation
+          );
+          this.imageZoomNode.addEventListener("click", this._stopPropagation);
+
+          this.imageZoomWrapper.addEventListener(
+            "click",
+            this._toggleShowImageZoomWrapper.bind(this, false)
+          );
+
+          window.removeEventListener(
+            "scroll",
+            this._toggleShowImageZoomWrapper
+          );
+          window.addEventListener(
+            "scroll",
+            this._toggleShowImageZoomWrapper.bind(this, false)
+          );
+
+          let imageNodes =
+            selector ||
+            document.querySelectorAll(
+              "img:not([id=js-zoom-image]):not([id=js-zoom-image-clone])"
+            );
+
+          if (imageNodes.length > 0) {
+            imageNodes.forEach((imgNode) => {
+              imgNode.addEventListener(
+                "click",
+                _self._handleOnClickImage.bind(_self, imgNode)
+              );
+            });
+          } else {
+            imageNodes.addEventListener(
+              "click",
+              _self._handleOnClickImage.bind(_self, imageNodes)
+            );
+          }
+        };
+
+        this.refresh = this._init;
+
+        this._init();
+      }
+
+      zoom = new ZoomImage({
+        selector: document.querySelectorAll('.container img')
+      });
+    </script>
+  </body>
+</html>
