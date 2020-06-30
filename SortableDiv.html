@@ -21,13 +21,16 @@
         padding: 3px 10px;
       }
 
+      .sortable .dragging{
+        opacity: .82;
+        border: 2px dashed blue;
+        filter: grayscale(10);
+      }
+
       .sortable-item {
         position: relative;
         width: 16%;
         margin: 8px;
-      }
-      .sortable-item.active {
-        border: 2px dashed blue;
       }
       .sortable-item::before {
         content: "";
@@ -82,6 +85,8 @@
           container: document.querySelector(".sortable"),
         }
       ) {
+        this.isMobile = window.mobileCheck();
+
         this._setStyleElement = (element, style) => {
           Object.assign(element.style, style);
         };
@@ -176,26 +181,32 @@
         this._initDragEvent = (e) => {
           console.log(this, e);
 
-          let left = Math.abs(e.target.offsetLeft - e.clientX);
-          let top = Math.abs(e.target.offsetTop - e.clientY);
+          let _clientX = !this.isMobile ? e.clientX : e.touches[0].clientX;
+          let _clientY = !this.isMobile ? e.clientY : e.touches[0].clientY;
 
-          let _targetElement = document.elementFromPoint(e.clientX, e.clientY);
+          let left = Math.abs(e.target.offsetLeft - _clientX);
+          let top = Math.abs(e.target.offsetTop - _clientY);
+
+          let _targetElement = document.elementFromPoint(_clientX, _clientY);
+
 
           if (_targetElement.classList.contains("sortable-item__clone")) {
             const {
-              left: _targetLeft,
-              top: _targetTop,
-            } = _targetElement.getBoundingClientRect();
+              offsetLeft: _targetLeft,
+              offsetTop: _targetTop,
+            } = _targetElement;
 
             this._targetElement = _targetElement;
 
             this._lastestPos = {
               left,
               top,
-              mouseLeftInElm: e.clientX - _targetLeft,
-              mouseTopInElm: e.clientY - _targetTop,
+              mouseLeftInElm: _clientX - _targetLeft,
+              mouseTopInElm: _clientY - _targetTop,
             };
 
+            console.log("drag start", _clientX, _clientY);
+            
             _childDragClone.innerHTML = "";
 
             this._log("drag start");
@@ -207,7 +218,7 @@
               margin: 0,
             });
             _childDragClone.appendChild(_cloneNode);
-            _targetElement.classList.add("active");
+            _targetElement.classList.add("dragging");
           }
         };
 
@@ -216,8 +227,11 @@
 
           this._log("dragging");
 
-          let left = Math.abs(container.offsetLeft - e.clientX);
-          let top = Math.abs(container.offsetTop - e.clientY);
+          let _clientX = !this.isMobile ? e.clientX : e.touches[0].clientX;
+          let _clientY = !this.isMobile ? e.clientY : e.touches[0].clientY;
+
+          let left = Math.abs(container.offsetLeft - _clientX);
+          let top = Math.abs(container.offsetTop - _clientY);
 
           this._setStyleElement(_childDragClone, {
             display: "block",
@@ -228,7 +242,7 @@
 
         this._resetDragEvent = (e) => {
           if (this._targetElement) {
-            this._targetElement.classList.remove("active");
+            this._targetElement.classList.remove("dragging");
           }
           // this._log('drag end')
 
@@ -237,8 +251,11 @@
             display: "none",
           });
 
-          console.log("reset.......");
         };
+
+        container.addEventListener('touchmove', () => {
+          this._log('winsdow touch start')
+        })
 
         this._initEventListener = () => {
           console.log("init event", this);
@@ -249,11 +266,7 @@
           window.removeEventListener("resize", this.refresh);
           window.addEventListener("resize", this.refresh.bind(this));
 
-          window.addEventListener('click', (e) => {
-            this._log('clicked')
-          })
-
-          if (!mobileCheck()) {
+          if (!this.isMobile) {
             this._log('not mobile')
             container.removeEventListener("mousedown", this._initDragEvent);
             container.addEventListener("mousedown", this._initDragEvent);
@@ -262,7 +275,7 @@
             container.removeEventListener("mousemove", this._dragging);
             container.addEventListener("mousemove", this._dragging);
           } else {
-            this._log('mobile')
+            this._log('___mobile')
             container.removeEventListener("touchstart", this._initDragEvent);
             container.addEventListener("touchstart", this._initDragEvent);
             container.removeEventListener("touchend", this._resetDragEvent);
