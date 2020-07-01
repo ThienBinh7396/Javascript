@@ -39,14 +39,16 @@
     </style>
   </head>
   <body>
-    <img
+    <div class="container2">
+      <img
       src="https://media-a.laodong.vn/Storage/NewsPortal/2019/6/10/738354/595097.jpg"
-    />
-    <img
-      src="https://i.pinimg.com/originals/e7/21/92/e72192eaa0faa91c4ddfbbde1ee48a14.jpg"
-      alt=""
-      srcset=""
-    />
+      />
+      <img
+        src="https://i.pinimg.com/originals/e7/21/92/e72192eaa0faa91c4ddfbbde1ee48a14.jpg"
+        alt=""
+        srcset=""
+      />
+    </div>
     <img src="./images/oto.jpg" alt="" srcset="" />
     <img
       src="https://images.vov.vn/cr_w720/uploaded/mgexs9y4vchrwhdtzaag/2019_09_07/vov_220832_vbpi.jpg"
@@ -62,17 +64,18 @@
     <script>
       function ZoomImage({ selector } = {}) {
         (function createModalWrapper() {
+          this.uuid = Date.now();
           this.imageZoomWrapper = document.createElement("div");
           this.imageZoomWrapper.className = "zoom-image";
           this.imageZoomWrapper.innerHTML = `
-          <img id="js-zoom-image" src="" alt="" />
-          <img id="js-zoom-image-clone" style="visibility: hidden" class="clone-image" src="" alt="CLONE-IMAGE" />
+          <img id="js-zoom-image-${this.uuid}" src="" alt="" />
+          <img id="js-zoom-image-clone-${this.uuid}" style="visibility: hidden" class="clone-image" src="" alt="CLONE-IMAGE" />
           `;
           document.body.appendChild(this.imageZoomWrapper);
 
-          this.imageZoomNode = document.getElementById("js-zoom-image");
+          this.imageZoomNode = document.getElementById(`js-zoom-image-${this.uuid}`);
           this.imageCloneZoomNode = document.getElementById(
-            "js-zoom-image-clone"
+            `js-zoom-image-clone-${this.uuid}`
           );
         }.call(this));
 
@@ -92,7 +95,7 @@
           let _defaultLeft =
             _windowWidth > _widthImageZoomNode
               ? (_windowWidth - _widthImageZoomNode) / 2
-              : document.documentElement.offsetWidth * 0.04;
+              : document.documentElement.offsetWidth * 0.04; // width: 92%
           let _defaultTop = (_windowHeight - _heightImageZoomNode) / 2;
 
           Object.assign(this.imageZoomNode.style, {
@@ -239,6 +242,9 @@
 
       zoom = new ZoomImage({
         selector: document.querySelectorAll('.container img')
+      });
+      new ZoomImage({
+        selector: document.querySelectorAll('.container2 img')
       });
     </script>
   </body>
