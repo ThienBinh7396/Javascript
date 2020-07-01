@@ -62,16 +62,17 @@
     <script type="text/coffeescript">
       ZoomImage = ({selector} = {}) ->
         (() ->
+          @uuid = Date.now()
           @imageZoomWrapper = document.createElement "div"
           @imageZoomWrapper.className = "zoom-image"
-          @imageZoomWrapper.innerHTML = '
-            <img id="js-zoom-image" src="" alt="" />
-            <img id="js-zoom-image-clone" style="visibility: hidden" class="clone-image" src="" alt="CLONE-IMAGE" />
-          ';
-          document.body.appendChild @imageZoomWrapper;
+          @imageZoomWrapper.innerHTML = "
+            <img id='js-zoom-image-#{@uuid}' alt='zoom image' />
+            <img id='js-zoom-image-clone-#{@uuid}' style='visibility: hidden' class='clone-image' alt='CLONE-IMAGE' />
+          "
+          document.body.appendChild @imageZoomWrapper
 
-          @imageZoomNode = document.getElementById "js-zoom-image";
-          @imageCloneZoomNode = document.getElementById 'js-zoom-image-clone'
+          @imageZoomNode = document.getElementById "js-zoom-image-#{@uuid}"
+          @imageCloneZoomNode = document.getElementById "js-zoom-image-clone-#{@uuid}"
 
           console.log(@imageCloneZoomNode)
         ).call(@);

@@ -97,97 +97,10 @@
       this._setStyleElement = (element, style) => {
         Object.assign(element.style, style);
       };
-      let {
-        left: _leftContainerNode,
-        top: _topContainerNode,
-      } = container.getBoundingClientRect();
       
-      let _first = false;
-      
-      let _containerClone = container.cloneNode();
-      
-      let _childDragClone = document.createElement("div");
-      _childDragClone.className = "sortable-drag-clone";
-
-      
-      this._cloneAndCalculatePositionChildNode = () => {
-        let _childSortNode = container.children;
-        let _childSortNodeClone = _containerClone.children;
-
-        for (let index = 0; index < _childSortNode.length; index++) {
-          const _childNode = _childSortNode[index];
-
-          if (
-            _childNode.classList.contains("sortable-drag-clone") ||
-            _childNode.classList.contains("sortable-clone")
-          )
-            continue;
-
-          const {
-            left: _leftChildNode,
-            top: _topChildNode,
-            width: _widthChildNode,
-            height: _heightChildNode,
-          } = _childNode.getBoundingClientRect();
-
-          let _childNodeClone;
-
-          if (!_first) {
-            _childNodeClone = _childNode.cloneNode(true);
-            _childNodeClone.classList.add("sortable-item__clone");
-            _childNodeClone.setAttribute('data-index', index);
-            _containerClone.appendChild(_childNodeClone);
-
-            _childNode.style.cssText = `${_childNode.style.cssText};visibility: hidden !important`;
-            _childNode.setAttribute('data-index', index);
-
-            _childNode.classList.add('sortable-item')
-
-          } else {
-            _childNodeClone = _childSortNodeClone[parseInt(_childNode.getAttribute('data-index'))];
-          }
-
-          this._setStyleElement(_childNodeClone, {
-            position: "absolute",
-            margin: 0,
-            top: _topChildNode - _topContainerNode + "px",
-            left: _leftChildNode - _leftContainerNode + "px",
-            width: _widthChildNode + "px",
-            height: _heightChildNode + "px",
-          });
-        }
-
-      }
-
-      this._getChildIndexByDataIndex = (dataIndex) => Array.from(container.children).indexOf(container.querySelector(`.sortable-item:not(.sortable-item__clone)[data-index='${dataIndex}']`))
-    
       const _init = () => {
         console.log("init");
 
-
-        let { width, height } = container.getBoundingClientRect();
-
-        if (!_first) {
-          _containerClone.className = "sortable-clone";
-          _containerClone.style.cssText = "z-index: 30";
-          container.parentNode.appendChild(_containerClone);
-
-          _childDragClone.style.cssText =
-            "position:absolute;display:none;z-index:200;user-select:none";
-          _childDragClone.innerText = "123";
-          _containerClone.appendChild(_childDragClone);
-        }
-        this._setStyleElement(_containerClone, {
-          position: "absolute",
-          width: width + "px",
-          height: height + "px",
-          top: 0,
-          left: 0,
-        });
-        
-        this._cloneAndCalculatePositionChildNode()
-
-        _first = true;
       };
 
       _init();
@@ -198,125 +111,21 @@
         window.log.innerHTML = msg;
       };
 
-      this._swapNodeByIndex = (index, index2) => {
-        let tempNode = container.children[index].cloneNode(true);
-        let tempNode2 = container.children[index2].cloneNode(true);
-        container.replaceChild(tempNode2, container.children[index]);
-        container.replaceChild(tempNode, container.children[index2]);
 
-        this._cloneAndCalculatePositionChildNode()
-      }
-
-      this._getChildNodeByPosition = (posLeft, posTop) => {
-        let _childNodes = container.children;
-
-        for (let index = 0; index < _childNodes.length; index++) {
-            let _childNode = _childNodes[index];
-
-          let {top, left, width, height} = _childNode.getBoundingClientRect();
-
-          if(left + 5 <= posLeft && left + width - 5 >= posLeft && top + 5 <= posTop && top + height - 5 >= posTop){
-            return index 
-          }
-        }
-
-        return -1
-      }
 
       this._initDragEvent = (e) => {
         console.log(this, e);
 
-        let _clientX = !this.isMobile ? e.clientX : e.touches[0].clientX;
-        let _clientY = !this.isMobile ? e.clientY : e.touches[0].clientY;
-
-        let left = Math.abs(e.target.offsetLeft - _clientX);
-        let top = Math.abs(e.target.offsetTop - _clientY);
-
-        let _targetElement = document.elementFromPoint(_clientX, _clientY);
-
-        if (_targetElement.classList.contains("sortable-item__clone")) {
-          const {
-            offsetLeft: _targetLeft,
-            offsetTop: _targetTop,
-          } = _targetElement;
-
-          this._targetElement = _targetElement;
-
-          this._lastestPos = {
-            left,
-            top,
-            mouseLeftInElm: _clientX - _targetLeft,
-            mouseTopInElm: _clientY - _targetTop,
-          };
-
-          console.log("drag start", _clientX, _clientY);
-
-          _childDragClone.innerHTML = "";
-
-          this._log("drag start");
-
-          let _cloneNode = this._targetElement.cloneNode(true);
-          this._setStyleElement(_cloneNode, {
-            top: 0,
-            left: 0,
-            margin: 0,
-          });
-          _childDragClone.appendChild(_cloneNode);
-          _targetElement.classList.add("dragging");
-        }
       };
 
-      let count = 0;
-
-
       this._dragging = (e) => {
-        if (!this._targetElement) return;
-        
-        let _clientX = !this.isMobile ? e.clientX : e.touches[0].clientX;
-        let _clientY = !this.isMobile ? e.clientY : e.touches[0].clientY;
-        
-        let left = Math.abs(container.offsetLeft - _clientX);
-        let top = Math.abs(container.offsetTop - _clientY);
-        
-        let _findIndex = this._getChildNodeByPosition(_clientX, _clientY)
-        
-        let findTargetIndex = this._getChildIndexByDataIndex(this._targetElement.getAttribute('data-index'));
-        console.log(_clientX, _clientY, _findIndex, findTargetIndex)
-        
-        if(_findIndex >= 0 && _findIndex !== findTargetIndex) {
-          console.log('swap index: ', _findIndex  , findTargetIndex)
-          count++;
-          if(count === 1){
-
-            this._swapNodeByIndex(_findIndex, findTargetIndex);
-          }
-        }
-
-        this._setStyleElement(_childDragClone, {
-          display: "block",
-          left: left - this._lastestPos.mouseLeftInElm + "px",
-          top: top - this._lastestPos.mouseTopInElm + "px",
-        });
+       
       };
 
       this._resetDragEvent = (e) => {
 
-        console.log(this._targetElement)
-        if (this._targetElement) {
-          this._targetElement.classList.remove("dragging");
-        }
-        // this._log('drag end')
-
-        this._targetElement = null;
-        this._setStyleElement(_childDragClone, {
-          display: "none",
-        });
 
       };
-
-      container.addEventListener('touchmove', () => {
-        this._log('winsdow touch start')
-      })
 
       this._initEventListener = () => {
         console.log("init event", this);
@@ -329,24 +138,24 @@
 
         if (!this.isMobile) {
           this._log('not mobile')
-          _containerClone.removeEventListener("mousedown", this._initDragEvent);
-          _containerClone.addEventListener("mousedown", this._initDragEvent);
-          _containerClone.removeEventListener("mouseup", this._resetDragEvent);
-          _containerClone.addEventListener("mouseup", this._resetDragEvent);
-          _containerClone.removeEventListener("mouseleave", this._resetDragEvent);
-          _containerClone.addEventListener("mouseupleave", this._resetDragEvent);
-          _containerClone.removeEventListener("mousemove", this._dragging);
-          _containerClone.addEventListener("mousemove", this._dragging);
+          container.removeEventListener("mousedown", this._initDragEvent);
+          container.addEventListener("mousedown", this._initDragEvent);
+          container.removeEventListener("mouseup", this._resetDragEvent);
+          container.addEventListener("mouseup", this._resetDragEvent);
+          container.removeEventListener("mouseleave", this._resetDragEvent);
+          container.addEventListener("mouseupleave", this._resetDragEvent);
+          container.removeEventListener("mousemove", this._dragging);
+          container.addEventListener("mousemove", this._dragging);
         } else {
           this._log('___mobile')
-          _containerClone.removeEventListener("touchstart", this._initDragEvent);
-          _containerClone.addEventListener("touchstart", this._initDragEvent);
-          _containerClone.removeEventListener("touchend", this._resetDragEvent);
-          _containerClone.addEventListener("touchend", this._resetDragEvent);
-          _containerClone.removeEventListener("touchleave", this._resetDragEvent);
-          _containerClone.addEventListener("touchleave", this._resetDragEvent);
-          _containerClone.removeEventListener("touchmove", this._dragging);
-          _containerClone.addEventListener("touchmove", this._dragging);
+          container.removeEventListener("touchstart", this._initDragEvent);
+          container.addEventListener("touchstart", this._initDragEvent);
+          container.removeEventListener("touchend", this._resetDragEvent);
+          container.addEventListener("touchend", this._resetDragEvent);
+          container.removeEventListener("touchleave", this._resetDragEvent);
+          container.addEventListener("touchleave", this._resetDragEvent);
+          container.removeEventListener("touchmove", this._dragging);
+          container.addEventListener("touchmove", this._dragging);
         }
       };
 
