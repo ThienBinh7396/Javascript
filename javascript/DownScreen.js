@@ -1,9 +1,6 @@
 class DownScreen {
-  constructor({matrix, context}) {
-    this.matrix = matrix
+  constructor({context}) {
     this.context = context
-
-    console.log(matrix)
   }
 
   drawGrid = () => {

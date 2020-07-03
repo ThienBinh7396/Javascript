@@ -4,16 +4,19 @@ class Down {
 		this.container = document.querySelector('#container')
 		this.context = this.container.getContext('2d')
 
+		this.timer = null;
+
 		this.matrix = []
 
 		this.dots = []
 
-		this.dot = null
-
-		this.screen = new DownScreen(this)
+		this.screen = new DownScreen({
+			context: this.context
+		})
 
 		this.init()
 
+		window.matrix = this.matrix
 	}
 
 	init = () => {
@@ -31,77 +34,24 @@ class Down {
 			height: HEIGHT_CONTAINER * CELL_SIZE
 		})
 
-		this.shapes = {
-			t: {
-				0: [
-					[_, _, _],
-					[0, _, 0]
-				],
-				1: [
-					[0, _],
-					[_, _],
-					[0, _],
-				],
-				2: [
-					[0, _, 0],
-					[_, _, _],
-				],
-				3: [
-					[_, 0],
-					[_, _],
-					[_, 0],
-				]
-			},
-			z: {
-				0: [
-					[_, 0],
-					[_, _],
-					[0, _]
-				],
-				1: [
-					[0, _, _],
-					[_, _, 0]
-				]
-			},
-			l: {
-				0: [
-					[_, 0],
-					[_, 0],
-					[_, _]
-				],
-				1: [
-					[_, _, _],
-					[_, 0, 0]
-				],
-				2: [
-					[_, _],
-					[0, _],
-					[0, _]
-				],
-				3: [
-					[0, 0, _],
-					[_, _, _]
-				],
-			},
-			v: {
-				0: [[_, _, _, _]],
-				1: [
-					[_],
-					[_],
-					[_],
-					[_]
-				]
-			}
-		}
-
-		this.dot = new DownDot({ ...this, row: 3, col: 0 })
-
 		this.listenKeyBoardEvent()
 
-		this.update()
+		this.generateBrick()
+
+		this.infiniteLoop()
 	}
 
 	listenKeyBoardEvent = () => {
+		let _self = this
+		document.getElementById('start').addEventListener('click', (e) => {
+			_self.start()
+
+		})
+		document.getElementById('stop').addEventListener('click', (e) => {
+			_self.stop()
+
+		})
+
 		document.addEventListener('keyup', (e) => {
 			switch (e.keyCode) {
 				case 39:
@@ -113,18 +63,7 @@ class Down {
 			}
 
 			this.draw()
-
-
 		})
-	}
-
-	generateShape = () => {
-		let _randomTypeShape = 'tzlv'.charAt(parseInt(Math.random() * 4))
-
-		this.shape = {
-			variant: this.shapes[_randomTypeShape][0],
-			vetical: 0
-		}
 	}
 
 	setAttribute = (target, attributes) => {
@@ -133,27 +72,112 @@ class Down {
 		}
 	}
 
-	checkShapeIsStopDownAtPos = () => {
+	generateBrick = () => {
+		this.brick = null
+		this.brick = new DownBrick({
+			matrix: this.matrix,
+			context: this.context
+		})
 
+	}
+
+	removeLine = (line) => {
+		for (let j = line; j >= 0; j--) {
+			for (let i = 0; i < WIDTH_CONTAINER; i++) {
+				if (j === 0) {
+					this.matrix[j][i] = 0
+				} else {
+					if (this.matrix[j][i] !== this.matrix[j - 1][i]) {
+						this.matrix[j][i] = this.matrix[j - 1][i]
+					}
+				}
+			}
+		}
+		let i = 0;
+
+		while (i < this.dots.length) {
+			if (this.dots[i].col === line) {
+				this.dots.splice(i, 1)
+				continue
+			}
+			else {
+				this.dots[i].col++
+			}
+			i++
+
+		}
+	}
+
+	checkFullLine = () => {
+		let checkLine
+
+		for (let j = HEIGHT_CONTAINER - 1; j >= 0; j--) {
+			checkLine = true
+
+			for (let i = 0; i < WIDTH_CONTAINER; i++) {
+				if (this.matrix[j][i] !== _) checkLine = false
+			}
+
+			if (checkLine) {
+				console.log(j)
+
+				this.removeLine(j)
+			}
+		}
+
+	}
+
+	checkGameOver = () => {
+		for (let i = 0; i < WIDTH_CONTAINER; i++) {
+			if (this.matrix[0][i] === _) return true
+
+		}
+		return false
 	}
 
 	draw = () => {
 		this.context.clearRect(0, 0, WIDTH_CONTAINER * CELL_SIZE, HEIGHT_CONTAINER * CELL_SIZE)
-		this.dot.draw()
+
+		if (this.brick) this.brick.draw()
+
+		this.dots.forEach(dot => dot.draw())
+
 		this.screen.draw()
-
-
 	}
 
 	update = () => {
-		console.log(this);
-		setInterval(() => {
-			this.draw()
-			this.dot.update()
-			this.dots.forEach(dot => dot.update())
-		}, this.speedDown)
+		if (this.brick.canDown()) {
+			this.brick.update()
+		}
+		else {
+			console.log(this.brick)
+			this.dots = [...this.dots, ...this.brick.getDots()]
+			// this.checkFullLine()
+			this.generateBrick()
+
+		}
+
+		this.draw()
+
 	}
 
+	stop = () => {
+		if (this.timer) clearInterval(this.timer)
+
+	}
+
+	start = () => {
+		this.infiniteLoop()
+	}
+
+	infiniteLoop = () => {
+		if (this.timer) clearInterval(this.timer)
+
+		this.timer = setInterval(() => {
+			this.update()
+
+		}, this.speedDown)
+	}
 }
 
 window.down = new Down()
