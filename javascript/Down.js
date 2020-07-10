@@ -4,7 +4,15 @@ class Down {
 		this.container = document.querySelector('#container')
 		this.context = this.container.getContext('2d')
 
+		this.start = this.start.bind(this)
+
+		this.stop = this.stop.bind(this)
+
+		this.score = 0
+
 		this.timer = null;
+
+		this.keyDownTimer = null
 
 		this.matrix = []
 
@@ -30,8 +38,8 @@ class Down {
 		console.table(this.matrix)
 
 		this.setAttribute(this.container, {
-			width: WIDTH_CONTAINER * CELL_SIZE,
-			height: HEIGHT_CONTAINER * CELL_SIZE
+			width: WIDTH_CONTAINER * (CELL_SIZE + 3),
+			height: HEIGHT_CONTAINER * (CELL_SIZE + 2)
 		})
 
 		this.listenKeyBoardEvent()
@@ -52,14 +60,21 @@ class Down {
 
 		})
 
-		document.addEventListener('keyup', (e) => {
+		document.addEventListener('keydown', (e) => {
+			console.log(e.keyCode)
+
 			switch (e.keyCode) {
+				case 32: 
+					this.brick.transformVariantBrick()
+					break
 				case 39:
-					this.dot.moveHorizontal(false)
+					this.brick.moveHorizontal(false)
 					break
 				case 37:
-					this.dot.moveHorizontal(true)
+					this.brick.moveHorizontal(true)
 					break;
+				case 40:
+					this.fastSpeedDown()
 			}
 
 			this.draw()
@@ -73,16 +88,18 @@ class Down {
 	}
 
 	generateBrick = () => {
-		this.brick = null
 		this.brick = new DownBrick({
 			matrix: this.matrix,
 			context: this.context
 		})
 
+		window.brick = this.brick
+
 	}
 
 	removeLine = (line) => {
-		for (let j = line; j >= 0; j--) {
+		console.log('LINE: ', line)
+		for (let j = line; j > -1	; j--) {
 			for (let i = 0; i < WIDTH_CONTAINER; i++) {
 				if (j === 0) {
 					this.matrix[j][i] = 0
@@ -97,22 +114,25 @@ class Down {
 
 		while (i < this.dots.length) {
 			if (this.dots[i].col === line) {
-				this.dots.splice(i, 1)
+				this.dots.splice(i, 1);
 				continue
 			}
-			else {
-				this.dots[i].col++
+			if(this.dots[i].col > line) {
+				i++
+				continue
 			}
+			this.dots[i].col++
 			i++
-
 		}
 	}
 
 	checkFullLine = () => {
 		let checkLine
 
-		for (let j = HEIGHT_CONTAINER - 1; j >= 0; j--) {
-			checkLine = true
+		let j = HEIGHT_CONTAINER - 1;
+
+		while (j > -1) {
+			checkLine = true	
 
 			for (let i = 0; i < WIDTH_CONTAINER; i++) {
 				if (this.matrix[j][i] !== _) checkLine = false
@@ -120,10 +140,15 @@ class Down {
 
 			if (checkLine) {
 				console.log(j)
-
+				this.score ++;
 				this.removeLine(j)
+				continue
 			}
+
+			j--
 		}
+
+		
 
 	}
 
@@ -148,13 +173,17 @@ class Down {
 	update = () => {
 		if (this.brick.canDown()) {
 			this.brick.update()
+			if(this.checkGameOver()) {
+				alert(this.score)
+				this.stop()
+			}
 		}
 		else {
 			console.log(this.brick)
 			this.dots = [...this.dots, ...this.brick.getDots()]
-			// this.checkFullLine()
+			this.checkFullLine()
 			this.generateBrick()
-
+			this.resetSpeedDown()
 		}
 
 		this.draw()
@@ -168,6 +197,18 @@ class Down {
 
 	start = () => {
 		this.infiniteLoop()
+	}
+
+	fastSpeedDown = () => {
+		this.speedDown = 0
+		this.infiniteLoop()
+	}
+	resetSpeedDown = () => {
+		if(this.speedDown !== DOWN_SPEED){
+			this.speedDown = DOWN_SPEED
+			this.infiniteLoop()
+		}
+
 	}
 
 	infiniteLoop = () => {

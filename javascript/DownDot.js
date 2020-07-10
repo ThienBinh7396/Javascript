@@ -1,3 +1,5 @@
+
+
 class DownDot {
   constructor({ matrix, context, row, col, color }) {
     this.matrix = matrix
@@ -12,8 +14,12 @@ class DownDot {
   }
 
   moveHorizontal = (left) => {
+    this.matrix[this.col][this.row] = 0
+
     this.row = left ? this.row - 1 : this.row + 1
     this.row = this.row < 0 ? 0 : this.row >= WIDTH_CONTAINER ? WIDTH_CONTAINER - 1 : this.row
+    
+    this.matrix[this.col][this.row] = _
   }
 
   canDown = () => {
