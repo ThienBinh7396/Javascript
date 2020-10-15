@@ -176,6 +176,8 @@ class Down {
 			if(this.checkGameOver()) {
 				alert(this.score)
 				this.stop()
+
+				window.location.href = this.container.toDataURL("image/png").replace("image/png", "image/octet-stream");
 			}
 		}
 		else {

@@ -135,7 +135,7 @@
           this._parentNode.classList.add("custom-select__wrapper");
 
           this._inputValueNode = document.createElement("div");
-          this._inputValueNode.classList.add("custom-select__value");
+          this._inputValueNode.classList.add("custom-select__value", config.labelClass || '');
 
           this._initSelectConfig = (select) => {
             let _initConfig = {
@@ -388,6 +388,8 @@
             console.log(this.config, this.options);
           };
 
+          this.refesh = this._init;
+
           this._init();
         }
 
@@ -406,6 +408,7 @@
         templateLabel: function (label) {
           return Array.isArray(label) ? label.join(":") : label;
         },
+        labelClass: 'form-control'
       });
     </script>
   </body>
